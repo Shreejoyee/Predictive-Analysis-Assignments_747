@@ -1,0 +1,89 @@
+---
+title: "Assignment 1"
+author: "Shreejoyee Nath"
+date: "2026-01-19"
+output: word_document
+---
+
+1. Report the “class” of the data set. How many rows and columns are in
+this data set? What do the rows and columns represent?
+
+```{r}
+library(MASS)
+data(Boston)
+class(Boston)
+dim(Boston)
+str(Boston)
+
+```
+Class of the data set:
+The data set is of class data.frame (pandas DataFrame equivalent).
+
+Dimensions:
+Number of rows: 506
+Number of columns: 14
+
+Interpretation:
+Rows represent 506 suburbs of Boston.
+Columns represent different socio-economic, environmental, and housing-related variables, such as crime rate, tax rate, pupil–teacher ratio, pollution levels, and median value of owner-occupied homes.
+
+2. Create a smaller data set with the variables median value of owner-occupied
+homes, per capita crime rate, nitrogen oxides concentration, proportion of
+blacks and percentage of lower status of the population. Choosing median
+value of owner occupied homes as the response and the rest as the pre-dictors, make scatter plots of the response versus each predictor. Present the scatter plots in different panels of the same graph. Comment on your findings.
+
+```{r}
+Boston_sub <- Boston[, c("medv", "crim", "nox", "black", "lstat")]
+par(mfrow = c(2, 2))
+
+plot(Boston_sub$crim, Boston_sub$medv,
+     xlab = "Crime rate",
+     ylab = "Median house value",
+     main = "medv vs crim")
+
+plot(Boston_sub$nox, Boston_sub$medv,
+     xlab = "Nitrogen oxides",
+     ylab = "Median house value",
+     main = "medv vs nox")
+
+plot(Boston_sub$black, Boston_sub$medv,
+     xlab = "Proportion of blacks",
+     ylab = "Median house value",
+     main = "medv vs black")
+
+plot(Boston_sub$lstat, Boston_sub$medv,
+     xlab = "Lower status population",
+     ylab = "Median house value",
+     main = "medv vs lstat")
+
+```
+
+
+3. Which suburb of Boston has lowest median value of owner-occupied homes?
+What are the values of the other predictors mentioned in (2), for that suburb. How do these values compare to the overall ranges for those pre-dictors? Comment on your findings. Hint: Mention which percentile these values belong to.
+
+```{r}
+min_medv <- Boston[which.min(Boston$medv), ]
+min_medv
+apply(Boston[, c("crim","nox","black","lstat")], 2,
+      function(x) ecdf(x)(min_medv[colnames(x)]) * 100)
+
+```
+The percentage of lower-status residents and the crime rate are both above the 95th percentile in the suburb with the lowest median value of owner-occupied residences. This explains why the value of the house is so low.
+
+4. Does any suburb of Boston stand out for having notably high crime rates,
+tax rates, or pupil–teacher ratios? Hint: Use a boxplot to detect any
+outliers. If so, identify the suburbs that show the outlier values.
+
+```{r}
+par(mfrow = c(1, 3))
+
+boxplot(Boston$crim, main = "Crime rate", ylab = "crim")
+boxplot(Boston$tax, main = "Tax rate", ylab = "tax")
+boxplot(Boston$ptratio, main = "Pupil-Teacher Ratio", ylab = "ptratio")
+boxplot.stats(Boston$crim)$out
+boxplot.stats(Boston$tax)$out
+boxplot.stats(Boston$ptratio)$out
+
+```
+The boxplots show a number of extreme anomalies in the tax and crime rates. While the student-teacher ratio displays fewer and less extreme outliers, a few suburbs have abnormally high crime and tax values.
