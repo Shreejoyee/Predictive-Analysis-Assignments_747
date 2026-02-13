@@ -1,0 +1,248 @@
+---
+title: "Predictive Analysis-PS3"
+author: "Shreejoyee Nath"
+date: "2026-02-13"
+output: html_document
+---
+
+(a) Regression of Balance on Gender Only:
+```{r}
+library(ISLR)
+data("Credit")
+model21 <- lm(Balance ~ Gender, data = Credit)
+summary(model21)
+
+```
+Interpretation:
+
+This model compares the average balance between the two gender categories.
+
+The intercept represents the mean balance for the reference gender.
+
+The coefficient for GenderFemale shows how much the average balance differs for females compared to males (if male is the baseline).
+
+If the p-value associated with gender is large, it suggests that gender alone does not significantly explain differences in balance.
+A very small R² would indicate that gender by itself explains almost none of the variability in credit card balances.
+
+(b) Regression of Balance on Gender and Ethnicity:
+```{r}
+model22 <- lm(Balance ~ Gender + Ethnicity, data = Credit)
+summary(model22)
+```
+
+Interpretation:
+
+Now the model measures:
+
+The effect of gender holding ethnicity constant.
+
+The effect of each ethnicity category relative to the reference group.
+
+If interactions are included, the combined effect of gender and ethnicity together.
+
+If ethnicity coefficients are significant, it suggests that balance differs across ethnic groups.
+If interaction terms are significant, it means the effect of gender depends on ethnicity.
+
+(c) Regression of Balance on Gender, Ethnicity, and Income:
+```{r}
+model23 <- lm(Balance ~ Gender + Ethnicity + Income, data = Credit)
+summary(model23)
+```
+
+Interpretation:
+
+This model allows us to observe:
+
+Whether income significantly predicts balance.
+
+Whether gender and ethnicity remain important after controlling for income.
+
+Whether the relationship between income and balance differs across gender or ethnicity (interaction effects).
+
+Typically, income is expected to have a strong relationship with balance.
+If income is statistically significant and increases R² substantially, it suggests quantitative predictors explain much more variation than qualitative predictors alone.
+
+```{r}
+library(stargazer)
+
+stargazer(model21, model22, model23,
+          type = "text",
+          title = "Regression Results for Balance")
+
+
+```
+
+Comments on Significant Coefficients
+
+Model (a): No meaningful significance.
+
+Model (b): Slight ethnic differences, but weak explanatory power.
+
+Model (c): Income is strongly significant.
+
+The addition of Income greatly improves model quality.
+
+Comments on Significant Coefficients
+
+Model (a): No meaningful significance.
+
+Model (b): Slight ethnic differences, but weak explanatory power.
+
+Model (c): Income is strongly significant.
+
+The addition of Income greatly improves model quality.
+
+
+(f) Compare Male African vs Male Caucasian (Model b)
+
+```{r}
+coef(model22)["EthnicityCaucasian"]
+
+```
+
+This coefficient gives the difference in average balance between a Caucasian male and an African American male.
+
+If negative → African American males have higher balances.
+If positive → Caucasian males have higher balances.
+
+(g) Compare Male African vs Male Caucasian at Income = 100,000 (Model c)
+
+```{r}
+coef(model23)["EthnicityCaucasian"]
+
+```
+
+When Income is held constant at 100,000:
+
+The ethnicity coefficient now represents the independent ethnic effect.
+
+The sign reversal compared to (f) indicates confounding by Income.
+
+(h) Compare Results of (f) and (g)
+
+Model (b):
+Difference reflects both ethnicity and income differences.
+
+Model (c):
+Difference reflects ethnicity only (income controlled).
+
+If the sign changes, this confirms Income was a confounding variable.
+
+Failing to include Income leads to misleading conclusions.
+
+(i) Predict Balance for Female Asian with Income = 200
+```{r}
+new_person <- data.frame(
+  Gender = "Female",
+  Ethnicity = "Asian",
+  Income = 200
+)
+
+predict(model23, newdata = new_person)
+
+```
+
+(j) Compare Models Using AIC, BIC and Adjusted R²
+```{r}
+AIC(model21, model22, model23)
+BIC(model21, model22, model23)
+
+summary(model21)$adj.r.squared
+summary(model22)$adj.r.squared
+summary(model23)$adj.r.squared
+
+```
+
+Model Preference
+
+Highest Adjusted R²
+
+Lowest AIC
+
+Lowest BIC
+
+Model (c) is preferred because:
+
+It has the highest explanatory power.
+
+It balances complexity and fit better than others.
+
+4)
+
+```{r}
+set.seed(123)
+
+n <- 100
+R <- 1000
+
+run_simulation <- function(n, R, beta_params) {
+
+  beta0 <- beta_params[1]
+  beta1 <- beta_params[2]
+  beta2 <- beta_params[3]
+  beta3 <- beta_params[4]
+
+  mse_correct <- numeric(R)
+  mse_naive <- numeric(R)
+
+  for (r in 1:R) {
+
+    x1 <- rnorm(n)
+    x2 <- rbinom(n, 1, 0.3)
+    epsilon <- rnorm(n)
+
+    y <- beta0 + beta1*x1 + beta2*x2 + beta3*(x1*x2) + epsilon
+
+    model_correct <- lm(y ~ x1 + x2 + x1:x2)
+    model_naive <- lm(y ~ x1 + x2)
+
+    mse_correct[r] <- mean(residuals(model_correct)^2)
+    mse_naive[r] <- mean(residuals(model_naive)^2)
+  }
+
+  list(
+    avg_mse_correct = mean(mse_correct),
+    avg_mse_naive = mean(mse_naive)
+  )
+}
+
+```
+
+
+Case 1: Small Interaction (β₃ ≈ 0)
+```{r}
+run_simulation(100, 1000, c(-2.5, 1.2, 2.3, 0.001))
+
+```
+
+
+Interpretation
+
+When the interaction coefficient is nearly zero:
+
+Both models perform similarly.
+
+Omitting interaction causes negligible loss.
+
+Case 2: Large Interaction (β₃ = 3.1)
+
+```{r}
+run_simulation(100, 1000, c(-2.5, 1.2, 2.3, 3.1))
+
+```
+
+Interpretation
+
+When interaction is strong:
+
+Naive model shows much larger MSE.
+
+Correct model significantly outperforms it.
+
+Ignoring interaction leads to biased and inefficient estimation.
+
+
+
+
+
+
