@@ -1,0 +1,73 @@
+---
+title: "ProblemSet7"
+author: "Shreejoyee Nath"
+date: "2026-03-19"
+output: html_document
+---
+You would be working with Hitters data set available in the ISLR library. You have to predict the Salary based on all available variables. First make sure that you have deleted all rows with one or more missing values. 
+
+```{r}
+rm(list=ls())
+install.packages("ISLR")
+library(ISLR)
+df=na.omit(Hitters)
+dim(df)
+```
+1. Split the data set into a training set and a test set randomly keeping 100 observations in test set and remaining in the training set. 
+
+```{r}
+set.seed(123)
+test.id=sample(1:263,100)
+train.data=df[-test.id,] #Training data
+head(train.data)
+test.data=df[test.id,] #Test data
+head(test.data)
+dim(train.data);dim(test.data)
+```
+
+2. Train the model using least squares and report the train MSE and test MSE.
+
+```{r}
+m1=lm(Salary~.,data=train.data)
+mse.train=1/163*(sum((train.data$Salary-predict(m1))^2))
+y.hat.test=predict(m1,newdata=test.data)
+mse.test=mean((test.data$Salary-y.hat.test)^2)
+mse.train
+mse.test
+```
+
+3. Fit ridge regression models on the training set, with grid values of λ. Report the following: 
+(i) the dimension of the coefficient matrix so obtained. 
+(ii) The l2 norm of the regression coefficients corresponding to the 50th and 60th choice of λ. Comment on the output. 
+(iv) Test MSE corresponding to these two choices of λ. 
+
+```{r}
+install.packages("glmnet")
+library(glmnet)
+lambda.grid = 10^seq(10, -2, length = 100)
+x=model.matrix(Salary~.,train.data)[,-1]
+x.test=model.matrix(Salary~.,test.data)[,-1]
+head(x)
+ridge.model=glmnet(x, train.data$Salary, alpha = 0,lambda=lambda.grid)
+dim(coef(ridge.model))
+
+beta50 = coef(ridge.model)[,50]
+beta60 = coef(ridge.model)[,60]
+
+l2.50 = sqrt(sum(beta50^2))
+l2.60 = sqrt(sum(beta60^2))
+
+l2.50
+l2.60
+
+pred50 = predict(ridge.model, s = lambda.grid[50], newx = x.test)
+pred60 = predict(ridge.model, s = lambda.grid[60], newx = x.test)
+
+mse50 = mean((test.data$Salary - pred50)^2)
+mse60 = mean((test.data$Salary - pred60)^2)
+
+mse50
+mse60
+```
+
+
